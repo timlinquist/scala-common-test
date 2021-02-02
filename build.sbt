@@ -9,7 +9,7 @@ lazy val commonTest = crossProject(JSPlatform, JVMPlatform)
   .settings(
     Common.settings ++ Common.publish ++ Seq(
       name := "scala-common-test",
-      organization := "com.github.amlorg",
+      organization := "org.mule.common",
       libraryDependencies ++= Seq(
         "org.scalatest" %%% "scalatest" % "3.0.5",
         "org.mule.common" %%% "scala-common" % scalaCommonVersion
@@ -24,6 +24,8 @@ lazy val commonTest = crossProject(JSPlatform, JVMPlatform)
     scalacOptions += "-P:scalajs:suppressExportDeprecations"
   )
 
+lazy val commonTestJVM = commonTest.jvm.in(file("./jvm"))
+lazy val commonTestJS  = commonTest.js.in(file("./js"))
 
 def getVersion(major: Int, minor: Int): String = {
 

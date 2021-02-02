@@ -23,7 +23,8 @@ pipeline {
         wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'XTerm']) {
           sh '''
               echo "about to publish in sbt"
-              sbt publish
+              sbt commonTestJS/publish
+              sbt commonTestJVM/publish
               echo "sbt publishing successful"
           '''
         }
