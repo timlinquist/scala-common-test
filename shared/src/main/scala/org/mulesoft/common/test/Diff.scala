@@ -249,20 +249,6 @@ object Diff {
      */
     def diff(a: String, b: String): List[Delta[String]] = diff(a.linesIterator.toList, b.linesIterator.toList)
 
-    /**
-     * Computes the difference between the 2 Readers and returns it as a List of Delta objects.
-     */
-    def diff(a: Reader, b: Reader): List[Delta[String]] = {
-      diff(Files.readLines(a), Files.readLines(b))
-    }
-
-    /**
-     * Computes the difference between the 2 Files and returns it as a List of Delta objects.
-     */
-    def diff(a: File, b: File): List[Delta[String]] = {
-      diff(Files.readLines(a), Files.readLines(b))
-    }
-
     /** Ignore empty lines. */
     def ignoreEmptyLines: Str = {
       new Str(equalsComparator, true)

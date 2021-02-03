@@ -6,9 +6,9 @@ import org.scalatest.Matchers._
 /**
  *
  */
-class DiffTest extends FunSuite with ListAssertions {
+class DiffTest extends FunSuite {
 
-  test("Case Insensitive org.mulesoft.common.test.Diff") {
+  test("Case Insensitive Diff") {
     val deltas = Diff.caseInsensitive.diff(first, second)
 
     val out2 = "1,3c1\n" +
@@ -31,12 +31,17 @@ class DiffTest extends FunSuite with ListAssertions {
     deltas.head.toString should startWith("org.mulesoft.common.test.Diff.Delta(0, c, 0, (  The")
   }
 
-  test("Case Insensitive org.mulesoft.common.test.Diff Strings By Line") {
+  test("Ingore spaces Diff") {
+    val deltas = Diff.ignoreAllSpace.diff("Hello    World", "He l l o W o r l d")
+    deltas shouldBe empty
+  }
+
+  test("Case Insensitive Diff Strings By Line") {
     val deltas: List[Diff.Delta[String]] = Diff.caseInsensitive.diff("Hello\nWorld", "HELLO\nWORLD")
     deltas shouldBe empty
   }
 
-  test("Case Sensitive org.mulesoft.common.test.Diff") {
+  test("Case Sensitive Diff") {
     val deltas: List[Diff.Delta[String]] = Diff.caseSensitive.diff(first, second)
     val out1: String = "1,4c1,3\n" +
       "<   The Way that can be told of is not the eternal Way;\n" +
@@ -54,7 +59,7 @@ class DiffTest extends FunSuite with ListAssertions {
     Diff.makeString(deltas).replace("\r\n", "\n") shouldEqual out1
   }
 
-  test("org.mulesoft.common.test.Diff Strings By Line") {
+  test("Diff Strings By Line") {
     val deltas: List[Diff.Delta[String]] = Diff.caseSensitive.diff("Hello\nWorld", "")
     deltas.size shouldEqual 1
 
