@@ -1,30 +1,30 @@
 package org.mulesoft.common.test
+import org.mulesoft.common.core._
+import org.mulesoft.common.test.Diff.{Delta, PathNode}
 
-import org.mulesoft.common.test.Diff.{Delta, PathNode, _}
-
-import java.io.{File, PrintWriter, Reader, StringWriter}
+import scala.reflect.ClassTag
 
 /**
- * org.mulesoft.common.test.Diff class to compare objects.
+ * Diff class to compare objects.
  */
-class Diff[T](equalsComparator: Equals[T]) {
+class Diff[T <: AnyRef: ClassTag](equalsComparator: (T, T) => Boolean) {
+
+  private def equal(a: T, b: T): Boolean = (a eq b) || b != null && equalsComparator(a, b)
 
   /**
    * Computes the difference between the 2 sequences and returns it as a List of Delta objects.
    */
-  def diff(a: List[T], b: List[T]): List[Delta[T]] = {
-    val path: PathNode = buildPath(a, b)
-    buildRevision(path, a, b)
+  def diff(at: Traversable[T], bt: Traversable[T]): List[Delta[T]] = {
+    val a = at.toArray
+    val b = bt.toArray
+    buildRevision(buildPath(a, b), a, b)
   }
 
-  protected def extractSubList(a: List[T], from: Int, to: Int): List[T] = {
-    a.slice(from, to)
-  }
+  protected def extractSubList(a: Array[T], from: Int, to: Int): Array[T] = a.slice(from, to)
 
-  def buildPath(a: List[T], b: List[T]): PathNode = {
-    // these are local constants
-    val aSize = a.size
-    val bSize = b.size
+  def buildPath(a: Array[T], b: Array[T]): PathNode = {
+    val aSize = a.length
+    val bSize = b.length
 
     val max      = aSize + bSize + 1
     val size     = 1 + 2 * max
@@ -32,61 +32,68 @@ class Diff[T](equalsComparator: Equals[T]) {
     val diagonal = new Array[PathNode](size)
 
     diagonal(middle + 1) = PathNode.snake(0, -1, null)
-    (0 until max).foreach(d => {
-      (-d to d by 2).foreach(k => {
-        val kMiddle        = middle + k
-        val kPlus          = kMiddle + 1
-        val kMinus         = kMiddle - 1
-        var prev: PathNode = null
+    for {
+      d <- 0 until max
+      k <- -d to d by 2
+    } {
+      val kMiddle        = middle + k
+      val kPlus          = kMiddle + 1
+      val kMinus         = kMiddle - 1
+      var prev: PathNode = null
 
-        var i = 0
-        if ((k == -d) || (k != d && diagonal(kMinus).i < diagonal(kPlus).i)) {
-          i = diagonal(kPlus).i
-          prev = diagonal(kPlus)
-        } else {
-          i = diagonal(kMinus).i + 1
-          prev = diagonal(kMinus)
-        }
+      var i = 0
+      if ((k == -d) || (k != d && diagonal(kMinus).i < diagonal(kPlus).i)) {
+        i = diagonal(kPlus).i
+        prev = diagonal(kPlus)
+      }
+      else {
+        i = diagonal(kMinus).i + 1
+        prev = diagonal(kMinus)
+      }
 
-        var j = i - k
+      var j = i - k
 
-        var node = PathNode.diffNode(i, j, prev)
+      var node = PathNode.diffNode(i, j, prev)
 
-        // orig and rev are zero-based
-        // but the algorithm is one-based
-        // that's why there's no +1 when indexing the sequences
-        while (i < aSize && j < bSize && equalsComparator.equal(a(i), b(j))) {
-          i = i + 1
-          j = j + 1
-        }
-        if (i > node.i) node = PathNode.snake(i, j, node)
+      // orig and rev are zero-based
+      // but the algorithm is one-based
+      // that's why there's no +1 when indexing the sequences
+      while (i < aSize && j < bSize && equal(a(i), b(j))) {
+        i = i + 1
+        j = j + 1
+      }
+      if (i > node.i) node = PathNode.snake(i, j, node)
 
-        diagonal(kMiddle) = node
+      diagonal(kMiddle) = node
 
-        if (i >= aSize && j >= bSize) return diagonal(kMiddle)
-      })
-    })
+      if (i >= aSize && j >= bSize) return diagonal(kMiddle)
+    }
+    // $COVERAGE-OFF$
     null
+    // $COVERAGE-ON$
   }
 
   /** Constructs a List of Deltas from a difference path. */
-  private def buildRevision(originalPath: PathNode, a: List[T], b: List[T]): List[Delta[T]] = {
-    var patch = List[Delta[T]]()
+  private def buildRevision(originalPath: PathNode, a: Array[T], b: Array[T]): List[Delta[T]] = {
+    var patch: List[Delta[T]] = Nil
 
-    var path: PathNode =
-      Option(originalPath).map(op => if (op.isSnake) op.prev else op).orNull
+    var path: PathNode = if (originalPath != null && originalPath.isSnake) originalPath.prev else originalPath
 
-    while (Option(path).isDefined && Option(path.prev).isDefined && path.prev.j >= 0) {
-      if (path.isSnake) throw new IllegalStateException()
+    while (path != null && path.prev != null && path.prev.j >= 0) {
+      if (path.isSnake) {
+        // $COVERAGE-OFF$
+        throw new IllegalStateException()
+        // $COVERAGE-ON$
+      }
 
       val i = path.i
       val j = path.j
 
       path = path.prev
 
-      val aSubList: List[T] = extractSubList(a, path.i, i)
-      val bSubList: List[T] = extractSubList(b, path.j, j)
-      if (aSubList.nonEmpty || bSubList.nonEmpty) patch = new Delta(path.i, aSubList, path.j, bSubList) +: patch
+      val delta = Delta[T](path.i, path.j, extractSubList(a, path.i, i), extractSubList(b, path.j, j))
+      if (delta != null)
+        patch = delta :: patch
 
       if (path.isSnake) path = path.prev
     }
@@ -97,181 +104,105 @@ class Diff[T](equalsComparator: Equals[T]) {
 object Diff {
 
   /** Creates a case insensitive diff for Strings. */
-  def caseInsensitive: Diff.Str = {
-    new Str(STRING_CASE_INSENSITIVE, false)
-  }
+  def caseInsensitive: Diff.Str = new Str(_ equalsIgnoreCase _)
 
   /** Creates a case sensitive diff for Strings. */
-  def caseSensitive: Diff.Str = {
-    new Str(STRING_EQUALS, false)
-  }
+  def caseSensitive: Diff.Str = new Str()
 
   /** Create a differ with the specified comparator. */
-  def apply[T](comparator: Equals[T]) = new Diff(comparator)
+  def apply[T](comparator: (T, T) => Boolean = (a: T, b: T) => a == b) = new Diff(comparator)
 
   /** Creates a diff Strings that ignore all space. */
-  def ignoreAllSpace: Diff.Str = {
-    new Str(STRING_EQUALS, true).ignoreSpaces
-  }
+  def ignoreAllSpace: Diff.Str = new Str(_ equalsIgnoreSpaces _, true)
 
   /** Convert all the list of deltas to a single string. */
-  def makeString[T](deltas: Iterable[Delta[T]]): String = {
-    val writer = new StringWriter()
-    val out    = new PrintWriter(writer)
-    deltas.foreach(_.print(out))
-    writer.toString
-  }
+  def makeString[T](deltas: Traversable[Delta[T]]): String = deltas.mkString
 
   /** Create a differ with the specified String comparator. */
-  def stringDiffer(comparator: Equals[String]): Str = {
-    new Str(comparator, false)
-  }
+  def stringDiffer(comparator: (String, String) => Boolean): Str = new Str(comparator, false)
 
   /** Creates a case sensitive diff that trim Strings, before comparing them. */
-  def trimming: Str = new Str(TRIM_COMPARATOR, false)
+  def trimming: Str = new Str(_.trim() == _.trim(), false)
 
-  private val STRING_CASE_INSENSITIVE: Equals[String] = new Equals[String]() {
-    override def doEqualComparison(a: String, b: String): Boolean = {
-      a equalsIgnoreCase b
-    }
-  }
-
-  private val STRING_EQUALS = new Equals[String]()
-
-  private val TRIM_COMPARATOR: Equals[String] = new Equals[String]() {
-    override def doEqualComparison(a: String, b: String): Boolean = {
-      a.trim equals b.trim
-    }
-  }
-
-  class Delta[T](aPosition: Int, aLines: List[T], bPosition: Int, bLines: List[T]) {
-    val t: Type = if (aLines.isEmpty) Add else if (bLines.isEmpty) Delete else Change
-
-    /**
-     * Print the Delta using the standard org.mulesoft.common.test.Diff format.
-     *
-     * @param  out  The Print Stream to print the delta to
-     */
-    def print(out: PrintWriter): Unit = {
-      if (t == Add) out.print(aPosition)
-      else printRange(out, aPosition, aLines)
-      out.print(t)
-      if (t == Delete) out.print(bPosition)
-      else printRange(out, bPosition, bLines)
-      out.println()
-
-      aLines.foreach((l: Any) => out.printf("< %s\n", l.asInstanceOf[Object]))
-      if (t == Change) out.println("---")
-      bLines.foreach((l: Any) => out.printf("> %s\n", l.asInstanceOf[Object]))
-    }
-
-    def fromList(value: Any): String = value match {
-      case null       => "null"
-      case l: List[_] => l.map(fromList).mkString("(", ", ", ")")
-      case a: Any     => a.toString
-    }
-
-    override def toString: String = {
-      Seq(aPosition, t, bPosition, fromList(aLines), fromList(bLines)).mkString("org.mulesoft.common.test.Diff.Delta(", ", ", ")")
-    }
-
-    def printRange(out: PrintWriter, pos: Int, lines: List[T]): Unit = {
-      out.print(pos + 1)
-      val n = lines.size
-      if (n > 1) {
-        out.print(',')
-        out.print(pos + n)
-      }
-    }
-  }
-
-  class Equals[T] {
-
-    /**
-     * Method that perform the actual comparison for equal between the 2 values You can override
-     * this method to implement other type of comparisons (i.e. case insensitive, ignore spaces,
-     * etc)
-     */
-    def doEqualComparison(a: T, b: T): Boolean = {
-      a equals b
-    }
-
-    def equal(a: T, b: T): Boolean = {
-      a == b || Option(b).isDefined && doEqualComparison(a, b)
-    }
-  }
-
-  class IgnoreSpace(val cmp: Equals[String]) extends Equals[String] {
-    override def doEqualComparison(a: String, b: String): Boolean = {
-      cmp.doEqualComparison(removeSpaces(a), removeSpaces(b))
-    }
-
-    def removeSpaces(a: String): String = {
-      val strBuilder = new StringBuilder()
-      for {
-        c <- a
-      } {
-        if (!Character.isWhitespace(c)) {
-          strBuilder.append(c)
-        }
-      }
-      a.filter(!Character.isWhitespace(_))
-      strBuilder.result()
-    }
-  }
-
-  class PathNode(val i: Int, val j: Int, val prev: PathNode) {
-    var snake: Boolean = false
-
-    def isSnake: Boolean = snake
-
+  class PathNode(val i: Int, val j: Int, val prev: PathNode, val isSnake: Boolean = false) {
     def previousSnake: PathNode =
-      if (i < 0 || j < 0) null else if (!snake && Option(prev).isDefined) prev.previousSnake else this
+      if (i < 0 || j < 0) null else if (!isSnake && prev != null) prev.previousSnake else this
   }
 
   object PathNode {
-    def snake(i: Int, j: Int, prev: PathNode): PathNode = {
-      val node = new PathNode(i, j, prev)
-      node.snake = true
-      node
-    }
+    def snake(i: Int, j: Int, prev: PathNode): PathNode = new PathNode(i, j, prev, true)
 
     def diffNode(i: Int, j: Int, prev: PathNode): PathNode = {
-      new PathNode(i, j, Option(prev).map(_.previousSnake).orNull)
+      new PathNode(i, j, if (prev == null) null else prev.previousSnake)
     }
   }
 
-  class Str(val equalsComparator: Equals[String], ignoreEmptyLine: Boolean) extends Diff[String](equalsComparator) {
+  class Str(equalsComparator: (String, String) => Boolean = _ == _, ignoreEmptyLine: Boolean = false)
+    extends Diff[String](equalsComparator) {
 
     /**
      * Computes the difference between the 2 strings split by end of line and returns it as a
      * List of Delta objects.
      */
-    def diff(a: String, b: String): List[Delta[String]] = diff(a.linesIterator.toList, b.linesIterator.toList)
+    def diff(a: String, b: String): List[Delta[String]] = super.diff(a.linesIterator.toList, b.linesIterator.toList)
 
-    /** Ignore empty lines. */
-    def ignoreEmptyLines: Str = {
-      new Str(equalsComparator, true)
-    }
-
-    /** Ignore empty lines. */
-    def ignoreSpaces: Str = {
-      new Str(new IgnoreSpace(equalsComparator), ignoreEmptyLine)
-    }
-
-    override protected def extractSubList(a: List[String], from: Int, to: Int): List[String] = {
-      val ts: List[String] = super.extractSubList(a, from, to)
+    override protected def extractSubList(a: Array[String], from: Int, to: Int): Array[String] = {
+      val ts = super.extractSubList(a, from, to)
       if (ignoreEmptyLine) {
-        if (ts.exists(_.nonEmpty)) ts else List()
-      } else ts
+        if (ts.exists(_.nonEmpty)) ts else Array()
+      }
+      else ts
     }
   }
 
-  case class Type(str: String) {
-    override def toString: String = str
+  sealed abstract class Delta[T](aPosition: Int, bPosition: Int, aLines: Array[T], bLines: Array[T]) {
+
+    /**
+     * Print the Delta using the standard Diff format.
+     */
+    override def toString: String = {
+      val s = new StringBuilder
+      s ++= rangeAsStr + "\n"
+      for (l <- aLines) s ++= "< " + l + "\n"
+      if (aLines.nonEmpty && bLines.nonEmpty) s ++= "---\n"
+      for (l <- bLines) s ++= "> " + l + "\n"
+      s.toString()
+    }
+
+    protected def range(pos: Int, lines: Array[T]): String = {
+      val from = pos + 1
+      val to   = pos + lines.length
+      from + (if (from == to) "" else "," + to)
+    }
+
+    def rangeAsStr: String
   }
 
-  object Add    extends Type("a")
-  object Delete extends Type("d")
-  object Change extends Type("c")
+  object Delta {
+    def apply[T](aPosition: Int, bPosition: Int, aLines: Array[T], bLines: Array[T]): Delta[T] =
+      if (aLines.isEmpty) {
+        if (bLines.isEmpty) null else Add(aPosition, bPosition, aLines, bLines)
+      }
+      else if (bLines.isEmpty) Delete(aPosition, bPosition, aLines, bLines)
+      else Change(aPosition, bPosition, aLines, bLines)
+  }
+
+  case class Add[T](aPosition: Int, bPosition: Int, aLines: Array[T], bLines: Array[T])
+    extends Delta[T](aPosition, bPosition, aLines, bLines) {
+    override def rangeAsStr: String = aPosition + "a" + range(bPosition, bLines)
+
+  }
+
+  case class Delete[T](aPosition: Int, bPosition: Int, aLines: Array[T], bLines: Array[T])
+    extends Delta[T](aPosition, bPosition, aLines, bLines) {
+    override def rangeAsStr: String = range(aPosition, aLines) + "d" + bPosition
+  }
+
+  case class Change[T](aPosition: Int, bPosition: Int, aLines: Array[T], bLines: Array[T])
+    extends Delta[T](aPosition, bPosition, aLines, bLines) {
+    override def rangeAsStr: String = range(aPosition, aLines) + "c" + range(bPosition, bLines)
+
+  }
+
 }
+

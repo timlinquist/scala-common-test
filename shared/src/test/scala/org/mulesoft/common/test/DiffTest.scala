@@ -28,7 +28,16 @@ class DiffTest extends FunSuite {
       Diff.makeString(deltas).replace("\r\n", "\n")
     }
 
-    deltas.head.toString should startWith("org.mulesoft.common.test.Diff.Delta(0, c, 0, (  The")
+    deltas.head.toString should startWith("1,3c1\n")
+
+    assertResult(out2) {
+      val deltas = Diff[String](_ equalsIgnoreCase _).diff(first, second)
+      Diff.makeString(deltas)
+    }
+    assertResult(out2) {
+      val deltas = Diff.stringDiffer(_ equalsIgnoreCase _).diff(first, second)
+      Diff.makeString(deltas)
+    }
   }
 
   test("Ingore spaces Diff") {
@@ -63,7 +72,7 @@ class DiffTest extends FunSuite {
     val deltas: List[Diff.Delta[String]] = Diff.caseSensitive.diff("Hello\nWorld", "")
     deltas.size shouldEqual 1
 
-    deltas.head.toString shouldEqual "org.mulesoft.common.test.Diff.Delta(0, d, 0, (Hello, World), ())"
+    deltas.head.toString shouldEqual "1,2d0\n< Hello\n< World\n"
   }
 
   //~ Static Fields ................................................................................................................................

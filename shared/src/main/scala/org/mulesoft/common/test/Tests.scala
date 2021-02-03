@@ -19,26 +19,14 @@ object Tests {
 
   private implicit val executionContext: ExecutionContext = ExecutionContext.Implicits.global
 
-  def checkLinesDiff(a: AsyncFile, e: AsyncFile, encoding: String = Utf8): Future[Assertion] = {
-    a.read(encoding).zip(e.read(encoding)).flatMap {
-      case (actual, expected) =>
-        val actualLines = actual.toString.linesIterator.toSeq.map(_.trim).toSet
-        val expectedLines = expected.toString.linesIterator.toSeq.map(_.trim).toSet
-        if (actualLines != expectedLines) {
-          val diff = actualLines.diff(expectedLines)
-          System.err.println("Not matching lines")
-          diff.foreach(l => System.err.println(l))
-          checkDiff(a, e)
-        } else {
-          Future { assert(actualLines == expectedLines) }
-        }
-    }
-  }
+  def checkLinesDiff(a: AsyncFile, e: AsyncFile, encoding: String = Utf8): Future[Assertion] = computeDiff(a, e, Diff.caseSensitive, encoding)
 
-  def checkDiff(a: AsyncFile, e: AsyncFile, encoding: String = Utf8): Future[Assertion] = {
+  def checkDiff(a: AsyncFile, e: AsyncFile, encoding: String = Utf8): Future[Assertion] = computeDiff(a, e, Diff.ignoreAllSpace, encoding)
+
+  def computeDiff(a: AsyncFile, e: AsyncFile, differ: Diff.Str, encoding: String = Utf8): Future[Assertion] = {
     a.read(encoding).zip(e.read(encoding)).map {
       case (actual, expected) =>
-        val diffs = Diff.ignoreAllSpace.diff(actual.toString, expected.toString)
+        val diffs = differ.diff(actual.toString, expected.toString)
         if (diffs.nonEmpty) {
           if (goldenOverride) {
             a.read(encoding).map(content => e.write(content.toString, encoding))
@@ -47,6 +35,25 @@ object Tests {
           }
         }
         succeed
+    }
+  }
+
+  def checkDiff(tuple: (String, String)): Assertion = tuple match {
+    case (actual, expected) =>
+      checkDiff(actual, expected, Diff.ignoreAllSpace)
+      Succeeded
+  }
+
+  /** Diff between 2 strings. */
+  def checkDiff(actual: String, expected: String, differ: Diff.Str): Unit = {
+    val diffs: List[Diff.Delta[String]] = differ.diff(actual, expected)
+    if (diffs.nonEmpty) {
+      println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+      println(expected)
+      println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+      println(actual)
+      println("==============================================")
+      fail("\n" + makeString(diffs))
     }
   }
 
