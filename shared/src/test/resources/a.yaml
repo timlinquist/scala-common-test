@@ -1,0 +1,7 @@
+bindingVersion: 31.07.92
+  exchange:
+    name: someame
+    type: topic
+    durable: false
+    vhost: /some-some
+    other: new field

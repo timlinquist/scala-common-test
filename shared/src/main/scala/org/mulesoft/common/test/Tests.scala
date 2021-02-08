@@ -31,7 +31,7 @@ object Tests {
           if (goldenOverride) {
             a.read(encoding).map(content => e.write(content.toString, encoding))
           } else {
-            fail(s"\ndiff -y -W 150 $a $e \n\n${makeString(diffs)}")
+            fail(s"\ndiff -y -W 150 $a $e\n\n${makeString(diffs)}")
           }
         }
         succeed
@@ -48,11 +48,6 @@ object Tests {
   def checkDiff(actual: String, expected: String, differ: Diff.Str): Unit = {
     val diffs: List[Diff.Delta[String]] = differ.diff(actual, expected)
     if (diffs.nonEmpty) {
-      println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-      println(expected)
-      println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-      println(actual)
-      println("==============================================")
       fail("\n" + makeString(diffs))
     }
   }
