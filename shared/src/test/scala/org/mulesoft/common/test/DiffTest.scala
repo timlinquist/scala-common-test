@@ -3,6 +3,8 @@ package org.mulesoft.common.test
 import org.scalatest.FunSuite
 import org.scalatest.Matchers._
 
+import java.io.{PrintWriter, StringWriter}
+
 /**
  *
  */
@@ -28,14 +30,14 @@ class DiffTest extends FunSuite {
       Diff.makeString(deltas).replace("\r\n", "\n")
     }
 
-    deltas.head.toString should startWith("1,3c1\n")
+    Diff.makeString(deltas) should startWith("1,3c1\n")
 
     assertResult(out2) {
-      val deltas = Diff[String](_ equalsIgnoreCase _).diff(first, second)
+      val deltas = Diff.caseInsensitive.diff(first, second)
       Diff.makeString(deltas)
     }
     assertResult(out2) {
-      val deltas = Diff.stringDiffer(_ equalsIgnoreCase _).diff(first, second)
+      val deltas = Diff.caseInsensitive.diff(first, second)
       Diff.makeString(deltas)
     }
   }
@@ -71,8 +73,7 @@ class DiffTest extends FunSuite {
   test("Diff Strings By Line") {
     val deltas: List[Diff.Delta[String]] = Diff.caseSensitive.diff("Hello\nWorld", "")
     deltas.size shouldEqual 1
-
-    deltas.head.toString shouldEqual "1,2d0\n< Hello\n< World\n"
+    Diff.makeString(deltas) shouldEqual "1,2d0\n< Hello\n< World\n"
   }
 
   //~ Static Fields ................................................................................................................................
