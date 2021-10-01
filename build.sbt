@@ -2,7 +2,24 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 version in ThisBuild := getVersion(0, 0)
 
-val scalaCommonVersion = "0.5.71"
+val scalaCommonVersion = "1.0.89"
+
+lazy val sonarUrl   = sys.env.getOrElse("SONAR_SERVER_URL", "Not found url.")
+lazy val sonarToken = sys.env.getOrElse("SONAR_SERVER_TOKEN", "Not found token.")
+lazy val branch     = sys.env.getOrElse("BRANCH_NAME", "develop")
+
+sonarProperties := Map(
+  "sonar.login"                      -> sonarToken,
+  "sonar.projectKey"                 -> "mulesoft.scala-common",
+  "sonar.projectName"                -> "Scala-common",
+  "sonar.projectVersion"             -> version.value,
+  "sonar.sourceEncoding"             -> "UTF-8",
+  "sonar.github.repository"          -> "aml-org/scala-common",
+  "sonar.branch.name"                -> branch,
+  "sonar.scala.coverage.reportPaths" -> "jvm/target/scala-2.12/scoverage-report/scoverage.xml",
+  "sonar.sources"                    -> "shared/src/main/scala",
+  "sonar.tests"                      -> "shared/src/test/scala"
+)
 
 lazy val commonTest = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
@@ -22,7 +39,7 @@ lazy val commonTest = crossProject(JSPlatform, JVMPlatform)
   .jsSettings(
     scalaJSModuleKind := ModuleKind.CommonJSModule,
     scalacOptions += "-P:scalajs:suppressExportDeprecations"
-  )
+  ).disablePlugins(SonarPlugin)
 
 lazy val commonTestJVM = commonTest.jvm.in(file("./jvm"))
 lazy val commonTestJS  = commonTest.js.in(file("./js"))
