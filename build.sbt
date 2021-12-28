@@ -1,6 +1,6 @@
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
-version in ThisBuild := getVersion(0, 0)
+ThisBuild / version := getVersion(0, 0)
 
 val scalaCommonVersion = "1.0.93"
 
