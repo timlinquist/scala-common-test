@@ -10,11 +10,11 @@ lazy val branch     = sys.env.getOrElse("BRANCH_NAME", "develop")
 
 sonarProperties := Map(
   "sonar.login"                      -> sonarToken,
-  "sonar.projectKey"                 -> "mulesoft.scala-common",
-  "sonar.projectName"                -> "Scala-common",
+  "sonar.projectKey"                 -> "mulesoft.scala-common-test",
+  "sonar.projectName"                -> "Scala-common-test",
   "sonar.projectVersion"             -> version.value,
   "sonar.sourceEncoding"             -> "UTF-8",
-  "sonar.github.repository"          -> "aml-org/scala-common",
+  "sonar.github.repository"          -> "aml-org/scala-common-test",
   "sonar.branch.name"                -> branch,
   "sonar.scala.coverage.reportPaths" -> "jvm/target/scala-2.12/scoverage-report/scoverage.xml",
   "sonar.sources"                    -> "shared/src/main/scala",
