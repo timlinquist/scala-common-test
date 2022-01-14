@@ -28,7 +28,7 @@ lazy val commonTest = crossProject(JSPlatform, JVMPlatform)
       name := "scala-common-test",
       organization := "org.mule.common",
       libraryDependencies ++= Seq(
-        "org.scalatest" %%% "scalatest" % "3.0.5",
+        "org.scalatest" %%% "scalatest" % "3.2.10",
         "org.mule.common" %%% "scala-common" % scalaCommonVersion
       ),
       resolvers ++= List(Common.releases, Common.snapshots, Resolver.mavenLocal),

@@ -1,7 +1,7 @@
 package org.mulesoft.common.test.util
 
 import org.scalatest.Assertion
-import org.scalatest.Matchers.{fail, succeed}
+import org.scalatest.Assertions.{fail, succeed}
 import org.scalatest.exceptions.TestFailedException
 
 import scala.concurrent.{ExecutionContext, Future}

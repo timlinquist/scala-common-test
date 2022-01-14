@@ -1,12 +1,11 @@
 package org.mulesoft.common.test
 
-import org.scalatest.FunSuite
-import org.scalatest.Matchers._
-
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers._
 /**
  *
  */
-class DiffTest extends FunSuite {
+class DiffTest extends AnyFunSuite {
 
   test("Case Insensitive Diff") {
     val deltas = Diff.caseInsensitive.diff(first, second)

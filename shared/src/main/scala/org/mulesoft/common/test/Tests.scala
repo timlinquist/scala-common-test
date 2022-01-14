@@ -2,15 +2,11 @@ package org.mulesoft.common.test
 
 import org.mulesoft.common.io.{AsyncFile, Utf8}
 import org.mulesoft.common.test.Diff.makeString
-import org.scalatest.Matchers.fail
+import org.scalatest.Assertions.{fail, succeed}
 import org.scalatest.{Assertion, Succeeded}
-import org.scalatest.Matchers._
 
-import java.io.{File, FileNotFoundException, FileReader, Reader}
-import java.lang.System.{arraycopy, getProperty}
-import java.net.{InetAddress, UnknownHostException}
+import java.lang.System.getProperty
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Random
 
 /**
   *
