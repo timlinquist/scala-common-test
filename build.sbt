@@ -2,7 +2,7 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 version in ThisBuild := getVersion(0, 0)
 
-val scalaCommonVersion = "1.0.89"
+val scalaCommonVersion = "1.0.93"
 
 lazy val sonarUrl   = sys.env.getOrElse("SONAR_SERVER_URL", "Not found url.")
 lazy val sonarToken = sys.env.getOrElse("SONAR_SERVER_TOKEN", "Not found token.")
