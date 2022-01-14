@@ -1,10 +1,10 @@
 package org.mulesoft.common.test
 
 import org.mulesoft.common.test.util.ValidateAssertion.validateTestFailedMessage
-import org.scalatest.{Assertion, FunSuite}
-import org.scalatest.exceptions.TestFailedException
+import org.scalatest.funsuite.AnyFunSuite
 
-class ListAssertionsTest extends FunSuite with ListAssertions {
+
+class ListAssertionsTest extends AnyFunSuite with ListAssertions {
 
   test("equal lists should assert correctly"){
     val a = List(1, 2)

@@ -1,8 +1,9 @@
 package org.mulesoft.common.test
 
 import org.scalactic.source.Position
+import org.scalatest.Tag
 import org.scalatest.compatible.Assertion
-import org.scalatest.{AsyncFunSuite, Tag}
+import org.scalatest.funsuite.AsyncFunSuite
 
 import scala.concurrent.Future
 

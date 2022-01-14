@@ -1,10 +1,8 @@
 package org.mulesoft.common.test
 
 import org.mulesoft.common.io.FileSystem
-import org.mulesoft.common.test.util.ValidateAssertion
 import org.mulesoft.common.test.util.ValidateAssertion.validateTestFailedMessage
-import org.scalatest.AsyncFunSuite
-import org.scalatest.exceptions.TestFailedException
+import org.scalatest.funsuite.AsyncFunSuite
 
 import scala.concurrent.{ExecutionContext, Future}
 
