@@ -2,7 +2,7 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 ThisBuild / version := getVersion(0, 1)
 
-val scalaCommonVersion = "1.0.93"
+val scalaCommonVersion = "1.1.95"
 
 lazy val commonTest = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
