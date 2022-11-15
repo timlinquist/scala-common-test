@@ -1,6 +1,8 @@
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
+import sbtsonar.SonarPlugin.autoImport.sonarProperties
 
 ThisBuild / version := getVersion(0, 1)
+ThisBuild / scalaVersion := "2.12.13"
 
 val scalaCommonVersion = "1.1.95"
 
@@ -23,6 +25,7 @@ lazy val commonTest = crossProject(JSPlatform, JVMPlatform)
       scalaJSModuleKind := ModuleKind.CommonJSModule,
       scalacOptions += "-P:scalajs:suppressExportDeprecations"
   )
+  .disablePlugins(SonarPlugin, ScoverageSbtPlugin)
 
 lazy val commonTestJVM = commonTest.jvm.in(file("./jvm"))
 lazy val commonTestJS  = commonTest.js.in(file("./js")).disablePlugins(SonarPlugin, ScoverageSbtPlugin)
@@ -37,12 +40,12 @@ def getVersion(major: Int, minor: Int): String = {
 
 lazy val sonarUrl   = sys.env.getOrElse("SONAR_SERVER_URL", "Not found url.")
 lazy val sonarToken = sys.env.getOrElse("SONAR_SERVER_TOKEN", "Not found token.")
-lazy val branch     = sys.env.getOrElse("BRANCH_NAME", "develop")
+lazy val branch     = sys.env.getOrElse("BRANCH_NAME", "master")
 
 sonarProperties := Map(
     "sonar.login"             -> sonarToken,
     "sonar.projectKey"        -> "mulesoft.scala-common-test",
-    "sonar.projectName"       -> "Scala-common-test",
+    "sonar.projectName"       -> "scala-common-test",
     "sonar.projectVersion"    -> version.value,
     "sonar.sourceEncoding"    -> "UTF-8",
     "sonar.github.repository" -> "aml-org/scala-common-test",
