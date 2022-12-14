@@ -4,7 +4,7 @@ import sbtsonar.SonarPlugin.autoImport.sonarProperties
 ThisBuild / version := getVersion(0, 1)
 ThisBuild / scalaVersion := "2.12.13"
 
-val scalaCommonVersion = "1.1.95"
+val scalaCommonVersion = "1.2.0-SCALAJS-SNAPSHOT"
 
 lazy val commonTest = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
@@ -20,10 +20,12 @@ lazy val commonTest = crossProject(JSPlatform, JVMPlatform)
           credentials ++= Common.credentials()
       )
   )
-  .jvmSettings(libraryDependencies += "org.scala-js" %% "scalajs-stubs" % scalaJSVersion % "provided")
+  .jvmSettings(libraryDependencies += "org.scala-js" %% "scalajs-stubs" % "1.1.0" % "provided")
   .jsSettings(
-      scalaJSModuleKind := ModuleKind.CommonJSModule,
-      scalacOptions += "-P:scalajs:suppressExportDeprecations"
+    scalaJSLinkerConfig ~= {
+      _.withModuleKind(ModuleKind.CommonJSModule)
+    },
+    scalacOptions += "-P:scalajs:nowarnGlobalExecutionContext"
   )
   .disablePlugins(SonarPlugin, ScoverageSbtPlugin)
 
@@ -35,7 +37,7 @@ def getVersion(major: Int, minor: Int): String = {
   lazy val build  = sys.env.getOrElse("BUILD_NUMBER", "0")
   lazy val branch = sys.env.get("BRANCH_NAME")
 
-  if (branch.contains("master")) s"$major.$minor.$build" else s"$major.${minor + 1}.0-SNAPSHOT"
+  if (branch.contains("master")) s"$major.$minor.$build" else s"$major.${minor + 1}.0-SCALAJS-SNAPSHOT"
 }
 
 lazy val sonarUrl   = sys.env.getOrElse("SONAR_SERVER_URL", "Not found url.")
