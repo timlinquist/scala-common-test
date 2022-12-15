@@ -58,6 +58,7 @@ pipeline {
         stage('Publish') {
             when {
                 branch 'master'
+                branch 'W-10547516/bump-scalajs'
             }
             steps {
                 wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'XTerm']) {
