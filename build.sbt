@@ -2,9 +2,9 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 import sbtsonar.SonarPlugin.autoImport.sonarProperties
 
 ThisBuild / version := getVersion(0, 1)
-ThisBuild / scalaVersion := "2.12.13"
+ThisBuild / scalaVersion := "2.12.15"
 
-val scalaCommonVersion = "1.1.95"
+val scalaCommonVersion = "1.1.97"
 
 lazy val commonTest = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
@@ -13,17 +13,18 @@ lazy val commonTest = crossProject(JSPlatform, JVMPlatform)
           name := "scala-common-test",
           organization := "org.mule.common",
           libraryDependencies ++= Seq(
-              "org.scalatest"   %%% "scalatest"    % "3.2.13",
+              "org.scalatest"   %%% "scalatest"    % "3.2.0",
               "org.mule.common" %%% "scala-common" % scalaCommonVersion
           ),
           resolvers ++= List(Common.releases, Common.snapshots, Resolver.mavenLocal),
           credentials ++= Common.credentials()
       )
   )
-  .jvmSettings(libraryDependencies += "org.scala-js" %% "scalajs-stubs" % scalaJSVersion % "provided")
+  .jvmSettings(libraryDependencies += "org.scala-js" %% "scalajs-stubs" % "1.1.0" % "provided")
   .jsSettings(
-      scalaJSModuleKind := ModuleKind.CommonJSModule,
-      scalacOptions += "-P:scalajs:suppressExportDeprecations"
+    scalaJSLinkerConfig ~= {
+      _.withModuleKind(ModuleKind.CommonJSModule)
+    }
   )
   .disablePlugins(SonarPlugin, ScoverageSbtPlugin)
 
