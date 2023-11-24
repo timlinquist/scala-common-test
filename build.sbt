@@ -2,9 +2,9 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 import sbtsonar.SonarPlugin.autoImport.sonarProperties
 
 ThisBuild / version := getVersion(0, 1)
-ThisBuild / scalaVersion := "2.12.15"
+ThisBuild / scalaVersion := "2.12.18"
 
-val scalaCommonVersion = "1.1.97"
+val scalaCommonVersion = "2.1.0-JAVA21-INTERNAL"
 
 lazy val commonTest = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
