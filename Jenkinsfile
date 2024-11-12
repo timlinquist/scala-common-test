@@ -44,6 +44,7 @@ pipeline {
             when {
                 anyOf {
                     branch 'master'
+                    branch 'java21-2024'
                 }
             }
             steps {
@@ -57,7 +58,10 @@ pipeline {
         }
         stage('Publish') {
             when {
-                branch 'master'
+                anyOf {
+                    branch 'master'
+                    branch 'java21-2024'
+                }
             }
             steps {
                 wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'XTerm']) {
