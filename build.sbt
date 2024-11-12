@@ -2,7 +2,7 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 import sbtsonar.SonarPlugin.autoImport.sonarProperties
 
 ThisBuild / version := getVersion(0, 1)
-ThisBuild / scalaVersion := "2.12.18"
+ThisBuild / scalaVersion := "2.12.20"
 
 val scalaCommonVersion = "2.1.0-JAVA21-INTERNAL"
 
